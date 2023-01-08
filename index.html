@@ -12,6 +12,12 @@
         <h1>Web-application for your posts!</h1>
     </header>
     <main>
+        <div class="preloader">
+            <div class="preloader__row">
+              <div class="preloader__item"></div>
+              <div class="preloader__item"></div>
+            </div>
+          </div>
         <div class="add-button-container">
             <button type="button" class="add-button">ADD POST</button>
         </div>
@@ -46,6 +52,15 @@
             </form>
         </section>
     </main>
+    <script>
+        window.onload = function () {
+          document.body.classList.add('loaded_hiding');
+          window.setTimeout(function () {
+            document.body.classList.add('loaded');
+            document.body.classList.remove('loaded_hiding');
+          }, 500);
+        }
+      </script>
     <script type="module" src = "./index.js"></script>
 </body>
 </html>
