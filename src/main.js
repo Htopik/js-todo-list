@@ -7,7 +7,7 @@ class ApiService{
                 'Content-Type': 'application/json; charset=UTF-8'
             },
             body: JSON.stringify(data)
-        }).then((res) => res.json())
+        }).then((res) => res.json()).catch((e) => alert(`error message: ${e}`));
     }
     edit(data, updId){
         const id = updId;
@@ -17,15 +17,18 @@ class ApiService{
             headers:{
                 'Content-type': 'application/json; charset=UTF-8',
               },
-        }).then((res) => res.json())
+        }).then((res) => res.json()).catch((e) => alert(`error message: ${e}`));
     }
     getName(id){
-        return fetch(`https://jsonplaceholder.typicode.com/users/${id}`).then((res) => res.json()).then((json) => json.username);
+        return fetch(`https://jsonplaceholder.typicode.com/users/${id}`).then((res) => res.json()).then((json) => json.username).catch((e) => alert(`error message: ${e}`));
     }
     remove(id){
         return fetch(`https://jsonplaceholder.typicode.com/posts/${id}`,{
             method:'DELETE',
-        });
+        }).catch((e) => alert(`error message: ${e}`));
+    }
+    fetchAllTodos() {
+        return fetch('https://jsonplaceholder.typicode.com/posts').then((res) => res.json()).catch((e) => alert(`error message: ${e}`));
     }
 }
 
@@ -64,20 +67,16 @@ class PostService{
         const bodyHead = document.createElement('p');
         bodyHead.append(document.createTextNode(body));
 
+        const delContainer = document.createElement('div');
+        delContainer.classList.add('delete-button')
+        const delBtn = document.createElement('button');
+        delBtn.append(document.createTextNode('X'));
+
         const editContainer = document.createElement('div');
         editContainer.classList.add('edit-button')
         const editBtn = document.createElement('button');
         editBtn.append(document.createTextNode('Edit'));
         
-        const delContainer = document.createElement('div');
-        delContainer.classList.add('delete-button')
-        const delBtn = document.createElement('button');
-        delBtn.append(document.createTextNode('Delete'));
-
-        const buttonCont = document.createElement('div');
-        buttonCont.classList.add('buttons')
-
-
         titleEl.append(titleHead);
         bodyEl.append(bodyHead);
         delContainer.append(delBtn);
@@ -88,12 +87,9 @@ class PostService{
 
         container.append(userName);
         container.append(info);
+        container.append(editContainer);
+        container.append(delContainer);
         
-        buttonCont.append(delContainer);
-        buttonCont.append(editContainer);
-        container.append(buttonCont);
-        
-
         delBtn.addEventListener('click', this._handleRemove);
         editBtn.addEventListener('click', this.openEdit);
 
@@ -109,18 +105,43 @@ class PostService{
             }
         })
     }
+    nameToID(text){
+        if (text==='Bret') return 1;
+        if (text==='Antonette') return 2;
+        if (text==='Samantha') return 3;
+        if (text==='Karianne') return 4;
+        if (text==='Kamren') return 5;
+        if (text==='Leopoldo_Corkery') return 6;
+        if (text==='Elwyn.Skiles') return 7;
+        if (text==='Maxime_Nienow') return 8;
+        if (text==='Delphine') return 9;
+        if (text==='Moriah.Stanton') return 10;
+        return -1;
+    }
     openEdit(e){
-        this.editModal.classList.toggle('hidden');
         const id = e.target.parentElement.parentElement.id;
         const elem = e.target.parentElement.parentElement;
+
+        const form = document.forms[0];
+        form["userid"].value = this.nameToID(elem.querySelector('.username h3').textContent);
+        form["title"].value = elem.querySelector('.info .title h4').textContent;
+        form["body"].value = elem.querySelector('.info .body p').textContent;
+        
+        this.editModal.classList.toggle('hidden');
+
         const editBtn = document.querySelector('.on-edit-button');
+        
         editBtn.addEventListener('click',() => this._onEdit(e, id, elem));
         
     }
-    closeEdit(){
 
+    closeEdit(){
         this.editModal.classList.toggle('hidden');
+        document.forms[0].reset();
+        this.modal.classList.remove('active');
+        this.overlay.classList.remove('active');
     }
+
     _onEdit(e, id,elem){
         e.preventDefault();
         const formData = {};
@@ -173,8 +194,12 @@ class MainService{
         this.addBtn = document.querySelector('.add-button');
         this.addBtn.addEventListener('click', (e) => this._onOpenModal(e));
     }
-    init(){
-        console.log('');
+    fetchAllTodo() {
+        this.api.fetchAllTodos().then((todos) => {
+            todos.forEach((todo) =>
+                this.postService.addPost(todo.userid, todo.title, todo.body, todo.id)
+            );
+        });
     }
     _onOpenModal(){
         this.modalService.open();
@@ -201,9 +226,13 @@ class ModalService{
         this.addModal.classList.toggle('hidden');
     }
     close(){
+        const form = document.forms[1];
+        form.reset();
         this.addModal.classList.toggle('hidden');
     }
     closeEdit(){
+        const form = document.forms[0];
+        form.reset();
         this.editModal.classList.toggle('hidden');
     }
     _onCreate(e) {
@@ -226,7 +255,7 @@ class ModalService{
             this.postService.addPost(data.userid, data.title, data.body, data.id);
         }));
         form.reset();
-        this.close();
+        this.close(form);
     }
    
     _validateForm(form, formData) {
@@ -253,5 +282,5 @@ const api = new ApiService();
 const postService = new PostService(api);
 const modalService = new ModalService(postService, api);
 const service = new MainService(postService, modalService, api);
-service.init();
+service.fetchAllTodo();
 
